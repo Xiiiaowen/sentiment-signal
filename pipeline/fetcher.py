@@ -37,8 +37,9 @@ def fetch_news(ticker: str) -> list[dict]:
         t = yf.Ticker(ticker, session=_SESSION)
         raw = t.news or []
     except Exception as e:
-        if "RateLimit" in type(e).__name__ or "429" in str(e):
-            raise RuntimeError("rate_limited")
+        err = type(e).__name__
+        if any(k in err for k in ("RateLimit", "DataException", "Exception")) or "429" in str(e):
+            raise RuntimeError(f"yf_error: {err}: {e}")
         raise
 
     articles = []

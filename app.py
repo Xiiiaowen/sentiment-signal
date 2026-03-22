@@ -150,14 +150,12 @@ with st.spinner(f"Fetching news and prices for **{ticker}**…"):
     try:
         articles = fetch_news(ticker)
     except RuntimeError as e:
-        if "rate_limited" in str(e):
-            st.error(
-                "**Yahoo Finance rate limit reached.** "
-                "This happens on shared cloud IPs. Wait 60 seconds and click Rerun, "
-                "or run the app locally where rate limits are much less frequent."
-            )
-            st.stop()
-        raise
+        st.error(
+            f"**Yahoo Finance returned an error** — this is common on Streamlit Cloud shared IPs. "
+            f"Wait 30–60 seconds and click **Rerun**, or run the app locally for best results. "
+            f"\n\n`{e}`"
+        )
+        st.stop()
     price_df = fetch_prices(ticker, period)
 
 if not articles:
