@@ -25,7 +25,7 @@ def score_headlines(ticker: str, headlines: tuple) -> list[dict]:
 # ── Colors ───────────────────────────────────────────────────────────────────
 COLOR_POS   = "#2ecc71"
 COLOR_NEG   = "#e74c3c"
-COLOR_NEU   = "#95a5a6"
+COLOR_NEU   = "#7fb3d3"
 COLOR_PRICE = "#3498db"
 
 # ── Page config ──────────────────────────────────────────────────────────────
@@ -77,7 +77,7 @@ st.markdown("""
 }
 .badge-pos { background: #1a3d2b; color: #2ecc71; border: 1px solid #2ecc7155; }
 .badge-neg { background: #3d1a1a; color: #e74c3c; border: 1px solid #e74c3c55; }
-.badge-neu { background: #2a2a2a; color: #95a5a6; border: 1px solid #95a5a655; }
+.badge-neu { background: #1a2a3d; color: #7fb3d3; border: 1px solid #7fb3d355; }
 /* Sentiment bar */
 .bar-track {
     background: #2a2a3e;
@@ -240,10 +240,16 @@ with tab1:
         st.markdown(
             f"""<div class='article-card'>
                 <div class='article-title'>{title_html}</div>
-                <div class='article-meta'>{row['publisher']} &nbsp;·&nbsp; {date_str} &nbsp;&nbsp; {badge_html}
-                    <span style='float:right;font-size:12px;color:#555;'>
-                        Confidence {confidence * 100:.0f}% &nbsp;·&nbsp; Score {row['score']:+.2f}
-                    </span>
+                <div style='display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;'>
+                    <div>
+                        <span style='font-size:12px;color:#888;font-weight:500;'>{row['publisher']}</span>
+                        <span style='font-size:12px;color:#555;'>&nbsp;·&nbsp;{date_str}</span>
+                    </div>
+                    <div style='display:flex;align-items:center;gap:10px;'>
+                        {badge_html}
+                        <span style='font-size:12px;color:#666;'>Confidence&nbsp;<b style='color:#aaa;'>{confidence * 100:.0f}%</b></span>
+                        <span style='font-size:12px;color:#666;'>Score&nbsp;<b style='color:{bar_color};'>{row['score']:+.2f}</b></span>
+                    </div>
                 </div>
                 <div class='bar-track'>
                     <div class='bar-fill' style='width:{bar_pct}%;background:{bar_color};'></div>
