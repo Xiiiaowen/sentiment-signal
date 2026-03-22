@@ -25,7 +25,7 @@ def score_headlines(ticker: str, headlines: tuple) -> list[dict]:
 # ── Colors ───────────────────────────────────────────────────────────────────
 COLOR_POS   = "#2ecc71"
 COLOR_NEG   = "#e74c3c"
-COLOR_NEU   = "#a29bfe"
+COLOR_NEU   = "#f6b93b"
 COLOR_PRICE = "#3498db"
 
 # ── Page config ──────────────────────────────────────────────────────────────
@@ -53,7 +53,28 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
-# ── Theme-aware CSS ───────────────────────────────────────────────────────────
+# ── Full-page dark mode override (injected when toggle is on) ─────────────────
+if dark_mode:
+    st.markdown("""
+    <style>
+    .stApp { background-color: #0e1117 !important; }
+    section[data-testid="stSidebar"] { background-color: #1e1e2e !important; }
+    .stTabs [data-baseweb="tab-list"] { background-color: #1e1e2e !important; gap: 4px; }
+    .stTabs [data-baseweb="tab"] { background-color: #1e1e2e !important; color: #aaa !important; }
+    .stTabs [aria-selected="true"] { color: #e0e0e0 !important; border-bottom-color: #3498db !important; }
+    .stTextInput input, .stSelectbox > div > div {
+        background-color: #2d2d42 !important; color: #e0e0e0 !important;
+        border-color: #3d3d5c !important;
+    }
+    .stMarkdown, .stMarkdown p, label, .stSelectbox label, .stTextInput label {
+        color: #e0e0e0 !important;
+    }
+    .stAlert { background-color: #1e1e2e !important; }
+    div[data-testid="stDataFrame"] { background-color: #1e1e2e !important; }
+    </style>
+    """, unsafe_allow_html=True)
+
+# ── Theme-aware card/chart CSS ────────────────────────────────────────────────
 if dark_mode:
     CARD_BG      = "#1e1e2e"
     CARD_BORDER  = "#2d2d42"
@@ -63,7 +84,7 @@ if dark_mode:
     SUB_COLOR    = "#999"
     HEADER_COLOR = "#e0e0e0"
     BAR_TRACK    = "#2a2a3e"
-    BADGE_NEU_BG = "#2a2142"
+    BADGE_NEU_BG = "#3a2e0f"
     PLOTLY_TPL   = "plotly_dark"
     PLOT_BG      = "#0e1117"
     GRID_COLOR   = "#1e1e2e"
@@ -76,7 +97,7 @@ else:
     SUB_COLOR    = "#777"
     HEADER_COLOR = "#1a1a2e"
     BAR_TRACK    = "#e8ecf0"
-    BADGE_NEU_BG = "#ede9fe"
+    BADGE_NEU_BG = "#fef3cd"
     PLOTLY_TPL   = "plotly_white"
     PLOT_BG      = "#ffffff"
     GRID_COLOR   = "#f0f0f0"
@@ -109,7 +130,7 @@ st.markdown(f"""
 }}
 .badge-pos {{ background: #1a3d2b; color: #2ecc71; border: 1px solid #2ecc7155; }}
 .badge-neg {{ background: #3d1a1a; color: #e74c3c; border: 1px solid #e74c3c55; }}
-.badge-neu {{ background: {BADGE_NEU_BG}; color: #a29bfe; border: 1px solid #a29bfe55; }}
+.badge-neu {{ background: {BADGE_NEU_BG}; color: #f6b93b; border: 1px solid #f6b93b55; }}
 .bar-track {{ background: {BAR_TRACK}; border-radius: 4px; height: 5px; margin-top: 10px; }}
 .bar-fill  {{ height: 5px; border-radius: 4px; }}
 .metric-card {{
