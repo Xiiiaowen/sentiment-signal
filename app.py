@@ -25,7 +25,7 @@ def score_headlines(ticker: str, headlines: tuple) -> list[dict]:
 # ── Colors ───────────────────────────────────────────────────────────────────
 COLOR_POS   = "#2ecc71"
 COLOR_NEG   = "#e74c3c"
-COLOR_NEU   = "#7fb3d3"
+COLOR_NEU   = "#a29bfe"
 COLOR_PRICE = "#3498db"
 
 # ── Page config ──────────────────────────────────────────────────────────────
@@ -35,121 +35,107 @@ st.set_page_config(
     layout="wide",
 )
 
-# ── Global CSS ───────────────────────────────────────────────────────────────
-st.markdown("""
+# ── Sidebar (mode toggle must come before CSS injection) ──────────────────────
+with st.sidebar:
+    st.markdown("## 📈 SentimentSignal")
+    st.markdown("<p style='font-size:13px;margin-top:-8px;'>Financial News · FinBERT NLP</p>", unsafe_allow_html=True)
+    st.markdown("---")
+    ticker = st.text_input("Ticker symbol", value="AAPL", placeholder="e.g. AAPL, TSLA, MSFT").strip().upper()
+    period = st.selectbox("Price lookback", ["1mo", "3mo", "6mo", "1y"], index=1)
+    st.markdown("---")
+    dark_mode = st.toggle("Dark mode", value=True)
+    st.markdown("---")
+    st.markdown(
+        "<p style='font-size:12px;'>"
+        "Powered by <a href='https://huggingface.co/ProsusAI/finbert' style='color:#3498db;'>ProsusAI/finbert</a> "
+        "— a finance-specific BERT model fine-tuned on Financial PhraseBank. "
+        "Price data via yfinance. No API keys required.</p>",
+        unsafe_allow_html=True,
+    )
+
+# ── Theme-aware CSS ───────────────────────────────────────────────────────────
+if dark_mode:
+    CARD_BG      = "#1e1e2e"
+    CARD_BORDER  = "#2d2d42"
+    TITLE_COLOR  = "#e0e0e0"
+    LINK_COLOR   = "#e0e0e0"
+    META_COLOR   = "#999"
+    SUB_COLOR    = "#999"
+    HEADER_COLOR = "#e0e0e0"
+    BAR_TRACK    = "#2a2a3e"
+    BADGE_NEU_BG = "#2a2142"
+    PLOTLY_TPL   = "plotly_dark"
+    PLOT_BG      = "#0e1117"
+    GRID_COLOR   = "#1e1e2e"
+else:
+    CARD_BG      = "#ffffff"
+    CARD_BORDER  = "#e0e6ed"
+    TITLE_COLOR  = "#1a1a2e"
+    LINK_COLOR   = "#1a1a2e"
+    META_COLOR   = "#666"
+    SUB_COLOR    = "#777"
+    HEADER_COLOR = "#1a1a2e"
+    BAR_TRACK    = "#e8ecf0"
+    BADGE_NEU_BG = "#ede9fe"
+    PLOTLY_TPL   = "plotly_white"
+    PLOT_BG      = "#ffffff"
+    GRID_COLOR   = "#f0f0f0"
+
+st.markdown(f"""
 <style>
-/* Article cards */
-.article-card {
-    background: #1e1e2e;
-    border: 1px solid #2d2d42;
+.article-card {{
+    background: {CARD_BG};
+    border: 1px solid {CARD_BORDER};
     border-radius: 10px;
     padding: 16px 20px 12px 20px;
     margin-bottom: 12px;
-}
-.article-title {
+}}
+.article-title {{
     font-size: 15px;
     font-weight: 600;
-    color: #e0e0e0;
+    color: {TITLE_COLOR};
     line-height: 1.4;
     margin-bottom: 6px;
-}
-.article-title a {
-    color: #e0e0e0;
-    text-decoration: none;
-}
-.article-title a:hover {
-    color: #3498db;
-    text-decoration: underline;
-}
-.article-meta {
-    font-size: 12px;
-    color: #777;
-    margin-bottom: 10px;
-}
-/* Sentiment badges */
-.badge {
+}}
+.article-title a {{ color: {LINK_COLOR}; text-decoration: none; }}
+.article-title a:hover {{ color: #3498db; text-decoration: underline; }}
+.badge {{
     display: inline-block;
     padding: 2px 10px;
     border-radius: 20px;
     font-size: 12px;
     font-weight: 600;
     letter-spacing: 0.3px;
-}
-.badge-pos { background: #1a3d2b; color: #2ecc71; border: 1px solid #2ecc7155; }
-.badge-neg { background: #3d1a1a; color: #e74c3c; border: 1px solid #e74c3c55; }
-.badge-neu { background: #1a2a3d; color: #7fb3d3; border: 1px solid #7fb3d355; }
-/* Sentiment bar */
-.bar-track {
-    background: #2a2a3e;
-    border-radius: 4px;
-    height: 5px;
-    margin-top: 10px;
-}
-.bar-fill {
-    height: 5px;
-    border-radius: 4px;
-}
-/* Confidence text */
-.conf-text {
-    font-size: 12px;
-    color: #666;
-    float: right;
-    margin-top: -18px;
-}
-/* Metric cards */
-.metric-card {
-    background: #1e1e2e;
-    border: 1px solid #2d2d42;
+}}
+.badge-pos {{ background: #1a3d2b; color: #2ecc71; border: 1px solid #2ecc7155; }}
+.badge-neg {{ background: #3d1a1a; color: #e74c3c; border: 1px solid #e74c3c55; }}
+.badge-neu {{ background: {BADGE_NEU_BG}; color: #a29bfe; border: 1px solid #a29bfe55; }}
+.bar-track {{ background: {BAR_TRACK}; border-radius: 4px; height: 5px; margin-top: 10px; }}
+.bar-fill  {{ height: 5px; border-radius: 4px; }}
+.metric-card {{
+    background: {CARD_BG};
+    border: 1px solid {CARD_BORDER};
     border-radius: 10px;
     padding: 14px 18px;
     text-align: center;
-}
-.metric-label {
+}}
+.metric-label {{
     font-size: 11px;
-    color: #777;
+    color: {META_COLOR};
     text-transform: uppercase;
     letter-spacing: 0.8px;
     margin-bottom: 4px;
-}
-.metric-value {
-    font-size: 22px;
-    font-weight: 700;
-    color: #e0e0e0;
-}
-/* Page header */
-.page-header {
+}}
+.metric-value {{ font-size: 22px; font-weight: 700; color: {HEADER_COLOR}; }}
+.page-header {{
     padding: 4px 0 20px 0;
-    border-bottom: 1px solid #2d2d42;
+    border-bottom: 1px solid {CARD_BORDER};
     margin-bottom: 24px;
-}
-.page-header h2 {
-    margin: 0 0 4px 0;
-    font-size: 22px;
-    color: #e0e0e0;
-}
-.page-header p {
-    margin: 0;
-    font-size: 13px;
-    color: #666;
-}
+}}
+.page-header h2 {{ margin: 0 0 6px 0; font-size: 22px; color: {HEADER_COLOR}; }}
+.page-header p  {{ margin: 0; font-size: 13px; color: {SUB_COLOR}; }}
 </style>
 """, unsafe_allow_html=True)
-
-# ── Sidebar ───────────────────────────────────────────────────────────────────
-with st.sidebar:
-    st.markdown("## 📈 SentimentSignal")
-    st.markdown("<p style='color:#666;font-size:13px;margin-top:-8px;'>Financial News · FinBERT NLP</p>", unsafe_allow_html=True)
-    st.markdown("---")
-    ticker = st.text_input("Ticker symbol", value="AAPL", placeholder="e.g. AAPL, TSLA, MSFT").strip().upper()
-    period = st.selectbox("Price lookback", ["1mo", "3mo", "6mo", "1y"], index=1)
-    st.markdown("---")
-    st.markdown(
-        "<p style='font-size:12px;color:#666;'>"
-        "Powered by <a href='https://huggingface.co/ProsusAI/finbert' style='color:#3498db;'>ProsusAI/finbert</a> "
-        "— a finance-specific BERT model fine-tuned on Financial PhraseBank. "
-        "Price data via yfinance. No API keys required.</p>",
-        unsafe_allow_html=True,
-    )
 
 # ── Data loading ──────────────────────────────────────────────────────────────
 with st.spinner(f"Fetching news and prices for **{ticker}**…"):
@@ -337,21 +323,21 @@ with tab2:
         )
 
         fig.update_layout(
-            template="plotly_dark",
+            template=PLOTLY_TPL,
             height=520,
-            paper_bgcolor="#0e1117",
-            plot_bgcolor="#0e1117",
+            paper_bgcolor=PLOT_BG,
+            plot_bgcolor=PLOT_BG,
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1,
                         bgcolor="rgba(0,0,0,0)"),
             hovermode="x unified",
             margin=dict(l=0, r=0, t=40, b=0),
         )
         fig.update_yaxes(title_text="Price (USD)", secondary_y=False,
-                         gridcolor="#1e1e2e", zerolinecolor="#2d2d42")
+                         gridcolor=GRID_COLOR, zerolinecolor=CARD_BORDER)
         fig.update_yaxes(title_text="Sentiment Score", secondary_y=True,
-                         range=[-1.2, 1.2], zeroline=True, zerolinecolor="#444",
-                         gridcolor="#1e1e2e")
-        fig.update_xaxes(gridcolor="#1e1e2e")
+                         range=[-1.2, 1.2], zeroline=True, zerolinecolor=CARD_BORDER,
+                         gridcolor=GRID_COLOR)
+        fig.update_xaxes(gridcolor=GRID_COLOR)
 
         st.plotly_chart(fig, use_container_width=True)
 
@@ -416,8 +402,8 @@ with tab3:
             textfont=dict(size=13),
         ))
         pie_fig.update_layout(
-            template="plotly_dark",
-            paper_bgcolor="#0e1117",
+            template=PLOTLY_TPL,
+            paper_bgcolor=PLOT_BG,
             height=260,
             margin=dict(l=0, r=0, t=10, b=0),
             showlegend=False,
@@ -495,15 +481,15 @@ with tab3:
             scatter_fig.add_vline(x=0, line_color="#333", line_dash="dot")
 
             scatter_fig.update_layout(
-                template="plotly_dark",
-                paper_bgcolor="#0e1117",
-                plot_bgcolor="#0e1117",
+                template=PLOTLY_TPL,
+                paper_bgcolor=PLOT_BG,
+                plot_bgcolor=PLOT_BG,
                 height=380,
                 xaxis_title="Daily Sentiment Score",
                 yaxis_title="Next-Day Return (%)",
                 margin=dict(l=0, r=0, t=10, b=0),
-                xaxis=dict(gridcolor="#1e1e2e", zerolinecolor="#333"),
-                yaxis=dict(gridcolor="#1e1e2e", zerolinecolor="#333"),
+                xaxis=dict(gridcolor=GRID_COLOR, zerolinecolor=CARD_BORDER),
+                yaxis=dict(gridcolor=GRID_COLOR, zerolinecolor=CARD_BORDER),
             )
             st.plotly_chart(scatter_fig, use_container_width=True)
 
