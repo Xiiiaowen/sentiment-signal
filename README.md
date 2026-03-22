@@ -2,6 +2,10 @@
 
 A financial news sentiment analyser that fetches recent news headlines for any stock ticker, scores them with FinBERT (a finance-specific NLP model), and visualises the sentiment signal alongside price data.
 
+**[Live Demo →](https://sentiment-signal-fn7gokguwqbgfuhjvgrrg6.streamlit.app/)**
+
+![Market Sentiment Analyser](photo/sentiment-signal.png)
+
 ---
 
 ## How It Works
@@ -35,6 +39,7 @@ The key insight: FinBERT is fine-tuned on financial text, so it correctly handle
   - **Sentiment vs Price** — dual-axis chart overlaying price and sentiment scatter
   - **Signal Analysis** — sentiment distribution, correlation stats, and scatter plot with trend line
 - **Any ticker** — works with any valid yfinance symbol (stocks, ETFs, indices)
+- **Dark / Light mode toggle**
 
 ---
 
@@ -47,7 +52,7 @@ The key insight: FinBERT is fine-tuned on financial text, so it correctly handle
 | Sentiment model | ProsusAI/finbert (HuggingFace) | Finance-specific BERT, 3-class |
 | Inference | transformers pipeline | CPU inference, cached with @st.cache_resource |
 | Disk cache | JSON files in data/cache/ | Keyed by MD5 hash of headline text |
-| Charts | Plotly | Interactive, dark theme |
+| Charts | Plotly | Interactive, dark/light theme |
 | UI | Streamlit | 3-tab layout |
 
 ---
@@ -57,7 +62,6 @@ The key insight: FinBERT is fine-tuned on financial text, so it correctly handle
 ### 1. Install dependencies
 
 ```bash
-cd market-sentiment
 pip install -r requirements.txt
 ```
 
@@ -76,7 +80,7 @@ On first run, HuggingFace downloads ProsusAI/finbert (~440 MB) and caches it in 
 ## Project Structure
 
 ```
-market-sentiment/
+sentiment-signal/
 ├── app.py                  # Streamlit UI — 3 tabs
 ├── pipeline/
 │   ├── __init__.py
@@ -85,9 +89,10 @@ market-sentiment/
 │   └── signal.py           # Aggregate scores → daily sentiment signal + analysis
 ├── data/
 │   └── cache/              # JSON sentiment cache keyed by headline hash (gitignored)
+├── photo/
+│   └── sentiment-signal.png
 ├── requirements.txt
 ├── .gitignore
-├── .env.example
 └── README.md
 ```
 
