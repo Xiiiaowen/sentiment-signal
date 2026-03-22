@@ -1,28 +1,25 @@
 """
 fetcher.py — fetch news headlines and OHLCV price data via yfinance
 """
-import time
 import datetime as _dt
+import time
 
 import pandas as pd
-import requests
 import streamlit as st
 import yfinance as yf
 
-# Custom session with a browser-like User-Agent to avoid Yahoo Finance rate limits
-# (Streamlit Cloud shared IPs get blocked with the default yfinance agent)
-_SESSION = requests.Session()
-_SESSION.headers.update({
-    "User-Agent": (
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-        "AppleWebKit/537.36 (KHTML, like Gecko) "
-        "Chrome/122.0.0.0 Safari/537.36"
-    )
-})
 
-
-def _ticker(symbol: str) -> yf.Ticker:
-    return yf.Ticker(symbol, session=_SESSION)
+def _fetch_news_raw(ticker: str):
+    """Fetch raw news with one retry on failure."""
+    for attempt in range(2):
+        try:
+            t = yf.Ticker(ticker)
+            return t.news or []
+        except Exception as e:
+            if attempt == 0:
+                time.sleep(3)
+                continue
+            raise RuntimeError(f"yf_error: {type(e).__name__}: {e}") from e
 
 
 @st.cache_data(ttl=300)
@@ -31,17 +28,8 @@ def fetch_news(ticker: str) -> list[dict]:
     Return list of news articles for the given ticker.
     Each dict: {title, publisher, providerPublishTime, link}
     Sorted most-recent first.
-    Raises RuntimeError on rate limit so the caller can show a friendly message.
     """
-    try:
-        t = yf.Ticker(ticker, session=_SESSION)
-        raw = t.news or []
-    except Exception as e:
-        err = type(e).__name__
-        if any(k in err for k in ("RateLimit", "DataException", "Exception")) or "429" in str(e):
-            raise RuntimeError(f"yf_error: {err}: {e}")
-        raise
-
+    raw = _fetch_news_raw(ticker)
     articles = []
     for item in raw:
         # yfinance >= 0.2.50 nests everything under "content"
@@ -81,13 +69,7 @@ def fetch_prices(ticker: str, period: str) -> pd.DataFrame:
     Returns empty DataFrame on failure.
     """
     try:
-        df = yf.download(
-            ticker,
-            period=period,
-            auto_adjust=True,
-            progress=False,
-            session=_SESSION,
-        )
+        df = yf.download(ticker, period=period, auto_adjust=True, progress=False)
         if df.empty:
             return pd.DataFrame()
         if isinstance(df.columns, pd.MultiIndex):
