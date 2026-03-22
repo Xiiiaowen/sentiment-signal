@@ -17,11 +17,32 @@ def fetch_news(ticker: str) -> list[dict]:
     raw = t.news or []
     articles = []
     for item in raw:
+        # yfinance >= 0.2.50 nests everything under "content"
+        content = item.get("content", item)
+        title = content.get("title", "")
+        publisher = (content.get("provider") or {}).get("displayName", "") or content.get("publisher", "")
+        link = (
+            (content.get("canonicalUrl") or {}).get("url", "")
+            or (content.get("clickThroughUrl") or {}).get("url", "")
+            or content.get("link", "")
+        )
+        # pubDate is an ISO string in new format; providerPublishTime is a Unix ts in old format
+        pub_date = content.get("pubDate") or content.get("displayTime", "")
+        if pub_date:
+            import datetime as _dt
+            try:
+                ts = int(_dt.datetime.fromisoformat(pub_date.replace("Z", "+00:00")).timestamp())
+            except Exception:
+                ts = 0
+        else:
+            ts = int(content.get("providerPublishTime", 0))
+        if not title:
+            continue
         articles.append({
-            "title": item.get("title", ""),
-            "publisher": item.get("publisher", ""),
-            "providerPublishTime": item.get("providerPublishTime", 0),
-            "link": item.get("link", ""),
+            "title": title,
+            "publisher": publisher,
+            "providerPublishTime": ts,
+            "link": link,
         })
     articles.sort(key=lambda x: x["providerPublishTime"], reverse=True)
     return articles

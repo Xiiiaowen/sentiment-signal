@@ -275,7 +275,12 @@ with tab3:
     st.subheader("Sentiment–Return Correlation")
 
     if signal_df.empty:
-        st.warning("Not enough overlapping dates between news and price data to compute correlations.")
+        st.warning(
+            "No overlapping dates between news and price data. "
+            "This usually happens when all news articles are from **today** — "
+            "end-of-day price data is not yet available for the current trading day. "
+            "Try again after market close, or check a ticker with older cached news."
+        )
     else:
         corr = compute_correlations(signal_df)
 
