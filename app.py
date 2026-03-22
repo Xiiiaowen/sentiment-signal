@@ -8,13 +8,19 @@ import streamlit as st
 from plotly.subplots import make_subplots
 
 from pipeline.fetcher import fetch_news, fetch_prices
-from pipeline.sentiment import score_headlines
+from pipeline.sentiment import score_headlines as _score_headlines
 from pipeline.signal import (
     build_sentiment_df,
     compute_correlations,
     compute_daily_signal,
     regression_line,
 )
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def score_headlines(ticker: str, headlines: tuple) -> list[dict]:
+    """Cached wrapper — tuple arg makes it hashable for st.cache_data."""
+    return _score_headlines(ticker, list(headlines))
+
 
 # ── Colors ───────────────────────────────────────────────────────────────────
 COLOR_POS   = "#2ecc71"
@@ -165,7 +171,7 @@ if not articles:
 headlines = [a["title"] for a in articles]
 
 with st.spinner("Running FinBERT sentiment analysis…"):
-    scores = score_headlines(ticker, headlines)
+    scores = score_headlines(ticker, tuple(headlines))
 
 sentiment_df = build_sentiment_df(articles, scores)
 signal_df    = compute_daily_signal(sentiment_df, price_df)
